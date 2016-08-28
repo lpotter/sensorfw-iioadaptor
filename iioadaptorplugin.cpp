@@ -33,4 +33,6 @@ void IioAdaptorPlugin::Register(class Loader&)
     sm.registerDeviceAdaptor<IioAdaptor>("accelerometeradaptor");
 }
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
 Q_EXPORT_PLUGIN2(iioadaptor, IioAdaptorPlugin)
+#endif

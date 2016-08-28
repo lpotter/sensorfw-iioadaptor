@@ -2,7 +2,7 @@ QT += dbus
 
 CONFIG += qt debug warn_on link_prl link_pkgconfig plugin
 
-PKGCONFIG += sensord
+PKGCONFIG += sensord-qt5
 for(PKG, $$list($$unique(PKGCONFIG))) {
      !system(pkg-config --exists $$PKG):error($$PKG development files are missing)
 }

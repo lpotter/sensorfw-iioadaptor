@@ -27,14 +27,15 @@
 #include <logging.h>
 #include <config.h>
 #include <datatypes/utils.h>
+#include <unistd.h>
 
 #include "iioadaptor.h"
-#include <sensord/sysfsadaptor.h>
-#include <sensord/deviceadaptorringbuffer.h>
+#include <sensord-qt5/sysfsadaptor.h>
+#include <sensord-qt5/deviceadaptorringbuffer.h>
 #include <QTextStream>
 #include <QDir>
 
-#include <sensord/deviceadaptor.h>
+#include <sensord-qt5/deviceadaptor.h>
 #include "datatypes/orientationdata.h"
 
 IioAdaptor::IioAdaptor(const QString& id) :
