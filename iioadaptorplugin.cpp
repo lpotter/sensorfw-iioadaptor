@@ -28,7 +28,7 @@
 
 void IioAdaptorPlugin::Register(class Loader&)
 {
-    sensordLogD() << "registering iioadaptor";
+    sensordLogD() << "registering iioaccelerometeradaptor";
     SensorManager& sm = SensorManager::instance();
     sm.registerDeviceAdaptor<IioAdaptor>("accelerometeradaptor");
 }

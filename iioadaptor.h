@@ -34,8 +34,8 @@
 #define IIO_GYROSCOPE               2
 #define IIO_MAGNETOMETER            3
 
-#define IIO_ACCELEROMETER_ENABLE    "accl_enable"
-#define IIO_GYROSCOPE_ENABLE        "gyro_enable"
+#define IIO_ACCELEROMETER_ENABLE    "buffer/enable"
+#define IIO_GYROSCOPE_ENABLE        "buffer/enable"
 // FIXME: no enable for magn?
 #define IIO_MAGNETOMETER_ENABLE     "compass_cali_test"
 
@@ -110,6 +110,7 @@ private:
     void processSample(int pathId, int fd);
 
 	int sensorExists(int sensor);
+    int findSensor(const QString &name);
 	bool deviceEnable(int device, int enable);
 	QString deviceGetPath(int device);
 	QString deviceGetName(int device);
@@ -130,6 +131,8 @@ private:
     DeviceAdaptorRingBuffer<TimedXyzData>* iioMagnBuffer_;
 
 	struct iio_device devices_[IIO_MAX_DEVICES];
+private slots:
+    void setup();
 };
 
 #endif
