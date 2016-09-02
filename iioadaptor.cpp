@@ -25,7 +25,7 @@
 #include <errno.h>
 
 #include <iio.h>
-#include <libudev.h>
+//#include <libudev.h>
 
 #include <logging.h>
 #include <config.h>
