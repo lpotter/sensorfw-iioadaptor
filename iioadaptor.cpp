@@ -42,54 +42,41 @@
 #include <sensord-qt5/deviceadaptor.h>
 #include "datatypes/orientationdata.h"
 
-IioAdaptor::IioAdaptor(const QString& id) :
-        SysfsAdaptor(id, SysfsAdaptor::IntervalMode, true)
+IioAdaptor::IioAdaptor(const QString &id/*, int type*/) :
+        SysfsAdaptor(id, SysfsAdaptor::IntervalMode, true),
+        deviceId(id),
+        scale(-1)
 {
+    //sensorType = (IioAdaptor::IioSensorType)type;
+
     sensordLogD() << "Creating IioAdaptor with id: " << id;
 //    QTimer::singleShot(100, this,SLOT(setup()));
     setup();
 }
 
-
 IioAdaptor::~IioAdaptor()
 {
-    if (iioAcclBuffer_)
-        delete iioAcclBuffer_;
-    if (iioGyroBuffer_)
-        delete iioGyroBuffer_;
-    if (iioMagnBuffer_)
-        delete iioMagnBuffer_;
+    if (iioBuffer_)
+        delete iioBuffer_;
 }
 
 void IioAdaptor::setup()
 {
-
-    dev_accl_ = sensorExists(IIO_ACCELEROMETER);
-    dev_gyro_ = -1;/*sensorExists(IIO_GYROSCOPE);*/
-    dev_magn_ = -1;/*sensorExists(IIO_MAGNETOMETER);*/
+    if (deviceId.startsWith("accel"))
+        dev_accl_ = sensorExists(IioAdaptor::IIO_ACCELEROMETER);
+    else if (deviceId.startsWith("gyro"))
+        dev_gyro_ = -1;/*sensorExists(IIO_GYROSCOPE);*/
+    else if (deviceId.startsWith("mag"))
+        dev_magn_ = -1;/*sensorExists(IIO_MAGNETOMETER);*/
 
     qWarning() << Q_FUNC_INFO << dev_accl_;
 
     if (dev_accl_ != -1) {
-        iioAcclBuffer_ = new DeviceAdaptorRingBuffer<TimedXyzData>(1);
+        iioBuffer_ = new DeviceAdaptorRingBuffer<TimedXyzData>(1);
         QString desc = "Industrial I/O accelerometer (" +  devices_[dev_accl_].name +")";
         qWarning() << Q_FUNC_INFO << "Accelerometer found";
-        setAdaptedSensor("accelerometer", desc, iioAcclBuffer_);
+        setAdaptedSensor("accelerometer", desc, iioBuffer_);
     }
-
-//    if (dev_gyro_ != -1) {
-//        iioGyroBuffer_ = new DeviceAdaptorRingBuffer<TimedXyzData>(1);
-//        QString desc = "Industrial I/O gyroscope (" + devices_[dev_gyro_].name +")";
-//        sensordLogD() << "Gyroscope found";
-//        setAdaptedSensor("gyroscope", desc, iioGyroBuffer_);
-//    }
-
-//    if (dev_magn_ != -1) {
-//        iioMagnBuffer_ = new DeviceAdaptorRingBuffer<TimedXyzData>(1);
-//        QString desc = "Industrial I/O magnetometer (" + devices_[dev_magn_].name +")";
-//        sensordLogD() << "Magnetometer found";
-//        setAdaptedSensor("magnetometer", desc, iioMagnBuffer_);
-//    }
 
     // Disable and then enable devices to make sure they allow changing settings
 //    for (i = 0; i < IIO_MAX_DEVICES; ++i) {
@@ -102,13 +89,11 @@ void IioAdaptor::setup()
     introduceAvailableDataRange(DataRange(0, 65535, 1));
     introduceAvailableInterval(DataRange(10, 586, 0));
     setDefaultInterval(10);
-
 }
-
 
 int IioAdaptor::addDevice(int device) {
     
-    QDir dir(deviceGetPath(device));
+    QDir dir(devicePath);
     if (!dir.exists()) {
         qWarning() << Q_FUNC_INFO << "Directory ??? doesn't exists";
         return 1;
@@ -149,12 +134,15 @@ int IioAdaptor::findSensor(const QString &sensorName)
 
         qWarning() << iiodevice
                    << iio_device_get_name(iiodev);
+        devicePath = QString(IIO_SYSFS_BASE) + iiodevice + "/";
 
         int channels = iio_device_get_channels_count(iiodev);
 
         qWarning() << "name" << iio_device_get_name(iiodev)
-                   << "Channels" << channels;
+                   << "Channels" << channels
+                   << "devicePath" << devicePath;
         const char *attr;
+
 
         for (int j = 0; j < channels; j++) {
             const char *chId;
@@ -164,7 +152,8 @@ int IioAdaptor::findSensor(const QString &sensorName)
 
             attr = iio_channel_find_attr(chn,"raw");
 
-            QString filePath = "/sys/bus/iio/devices/"+iiodevice+"/"+iio_channel_attr_get_filename(chn, attr);
+            QString filePath = devicePath + iio_channel_attr_get_filename(chn, attr);
+//            QString filePath = "/sys/bus/iio/devices/"+iiodevice+"/"+iio_channel_attr_get_filename(chn, attr);
             qWarning() <<"filepath"<< filePath;
             addPath(filePath, j);
 
@@ -173,6 +162,16 @@ int IioAdaptor::findSensor(const QString &sensorName)
             //                       << iio_device_get_trigger(iiodev, &trig);
 
         }
+
+        if (scale < 0) {
+
+//            double val;
+//          //  iio_channel_attr_read(chn, "scale", buf, sizeof(buf));
+//            iio_channel_attr_read_double(chn, "scale", &val);
+//            scale = val;
+            qWarning() << "scale" << scale;
+        }
+
         return index;
     }
     return -1;
@@ -186,7 +185,7 @@ int IioAdaptor::findSensor(const QString &sensorName)
  * dev_rotation
  *
  * */
-int IioAdaptor::sensorExists(int sensor)
+int IioAdaptor::sensorExists(IioAdaptor::IioSensorType sensor)
 {
     QString sensorName;
     switch (sensor) {
@@ -208,18 +207,10 @@ int IioAdaptor::sensorExists(int sensor)
         return -1;
 }
 
-QString IioAdaptor::deviceGetPath(int device)
-{
-    QString pathDevice = QString(IIO_SYSFS_BASE) + "/iio:device"
-            + QString::number(device);
-    qWarning() << Q_FUNC_INFO << pathDevice;
-    return pathDevice;
-}
-
 bool IioAdaptor::deviceEnable(int device, int enable)
 {
-    QString pathEnable = deviceGetPath(device) + "/buffer/enable";
-    QString pathLength = deviceGetPath(device) + "/buffer/length";
+    QString pathEnable = devicePath + "/buffer/enable";
+    QString pathLength = devicePath + "/buffer/length";
 
     if (enable) {
         // FIXME: should enable sensors for this device? Assuming enabled already
@@ -238,15 +229,14 @@ bool IioAdaptor::deviceEnable(int device, int enable)
 
 QString IioAdaptor::deviceGetName(int device)
 {
-    QString pathDeviceName = deviceGetPath(device) + "/name";
-qWarning() << Q_FUNC_INFO << pathDeviceName;
+    QString pathDeviceName = devicePath + "/name";
+    qWarning() << Q_FUNC_INFO << pathDeviceName;
 
     return sysfsReadString(pathDeviceName);
 }
 
 bool IioAdaptor::sysfsWriteInt(QString filename, int val)
 {
-
     QFile file(filename);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         sensordLogW() << "Failed to open " << filename;
@@ -299,7 +289,7 @@ int IioAdaptor::sysfsReadInt(QString filename)
 // Return the number of channels
 int IioAdaptor::scanElementsEnable(int device, int enable)
 {
-    QString elementsPath = deviceGetPath(device) + "/scan_elements";
+    QString elementsPath = devicePath + "/scan_elements";
 
     qWarning() << Q_FUNC_INFO << elementsPath;
 
@@ -368,13 +358,14 @@ void IioAdaptor::processSample(int fileId, int fd)
         sensordLogW() << "read():" << strerror(errno);
         return;
     }
-    result=atoi(buf);
+    result = atoi(buf)  * scale * 1000;
     qWarning() << "Read " << result << " from device " << device << ", channel " << channel;
+qWarning() << result * scale;
 
     // FIXME: shouldn't hardcode
     // FIXME: Find a mapping between channels and actual devices (0, 1 and 2 are probably wrong)
     if (device == 0) {
-        TimedXyzData* accl = iioAcclBuffer_->nextSlot();
+        TimedXyzData* accl = iioBuffer_->nextSlot();
         switch(channel){
         case 0:
             accl->x_=result;
@@ -391,8 +382,8 @@ void IioAdaptor::processSample(int fileId, int fd)
         default:
             return;
         }
-        iioAcclBuffer_->commit();
-        iioAcclBuffer_->wakeUpReaders();
+        iioBuffer_->commit();
+        iioBuffer_->wakeUpReaders();
     }
 }
 

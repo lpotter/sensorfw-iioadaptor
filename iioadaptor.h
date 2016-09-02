@@ -28,11 +28,8 @@
 #include <sysfsadaptor.h>
 #include <datatypes/orientationdata.h>
 
-#define IIO_SYSFS_BASE              "/sys/bus/iio/devices"
+#define IIO_SYSFS_BASE              "/sys/bus/iio/devices/"
 
-#define IIO_ACCELEROMETER           1
-#define IIO_GYROSCOPE               2
-#define IIO_MAGNETOMETER            3
 
 #define IIO_ACCELEROMETER_ENABLE    "buffer/enable"
 #define IIO_GYROSCOPE_ENABLE        "buffer/enable"
@@ -66,7 +63,13 @@ struct iio_device {
  */
 class IioAdaptor : public SysfsAdaptor
 {
-    Q_OBJECT;
+    Q_OBJECT
+    enum IioSensorType {
+        IIO_ACCELEROMETER = 1,
+        IIO_GYROSCOPE,
+        IIO_MAGNETOMETER
+    };
+
 public:
     /**
      * Factory method for gaining a new instance of this adaptor class.
@@ -74,7 +77,7 @@ public:
      * @param id Identifier for the adaptor.
      * @return A pointer to created adaptor with base class type.
      */
-    static DeviceAdaptor* factoryMethod(const QString& id)
+    static DeviceAdaptor *factoryMethod(const QString& id)
     {
         return new IioAdaptor(id);
     }
@@ -86,7 +89,7 @@ protected:
      *
      * @param id Identifier for the adaptor.
      */
-    IioAdaptor(const QString& id);
+    IioAdaptor(const QString &id/*, int type*/);
 
     /**
      * Destructor.
@@ -109,11 +112,11 @@ private:
      */
     void processSample(int pathId, int fd);
 
-	int sensorExists(int sensor);
+    int sensorExists(IioAdaptor::IioSensorType sensor);
     int findSensor(const QString &name);
 	bool deviceEnable(int device, int enable);
-	QString deviceGetPath(int device);
-	QString deviceGetName(int device);
+
+    QString deviceGetName(int device);
 	bool sysfsWriteInt(QString filename, int val);
 	QString sysfsReadString(QString filename);
 	int sysfsReadInt(QString filename);
@@ -126,11 +129,16 @@ private:
     int dev_gyro_;
     int dev_magn_;
 
-    DeviceAdaptorRingBuffer<TimedXyzData>* iioAcclBuffer_;
-    DeviceAdaptorRingBuffer<TimedXyzData>* iioGyroBuffer_;
-    DeviceAdaptorRingBuffer<TimedXyzData>* iioMagnBuffer_;
+    DeviceAdaptorRingBuffer<TimedXyzData>* iioBuffer_;
+//    DeviceAdaptorRingBuffer<TimedXyzData>* iioGyroBuffer_;
+//    DeviceAdaptorRingBuffer<TimedXyzData>* iioMagnBuffer_;
 
 	struct iio_device devices_[IIO_MAX_DEVICES];
+    QString deviceId;
+    IioSensorType sensorType;
+    QString devicePath;
+    double scale;
+
 private slots:
     void setup();
 };
