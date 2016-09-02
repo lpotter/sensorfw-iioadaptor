@@ -6,9 +6,9 @@ PKGCONFIG += sensord-qt5
 for(PKG, $$list($$unique(PKGCONFIG))) {
      !system(pkg-config --exists $$PKG):error($$PKG development files are missing)
 }
-CONFIG += link_pkgconfig
-PKGCONFIG += udev
-LIBS += -ludev
+#CONFIG += link_pkgconfig
+#PKGCONFIG += udev
+#LIBS += -ludev
 
 PKGCONFIG += libiio
 LIBS += -liio
