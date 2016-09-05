@@ -155,6 +155,21 @@ int IioAdaptor::findSensor(const QString &sensorName)
                 QDirIterator it(syspath, QDirIterator::NoIteratorFlags);
                 while (it.hasNext()) {
                     QString file =  it.next();
+                    if (file.endsWith("scale")) {
+                        QFile qfile(file);
+                        if (qfile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+
+                            QTextStream in(&qfile);
+                            QString line = in.readAll();
+                            bool ok;
+                            double num = line.toDouble(&ok);
+                            if (ok) {
+                                scale = num;
+                                qWarning() << "scale is" << scale;
+                            }
+                            qfile.close();
+                        }
+                    }
                     if (file.endsWith("raw")) {
                         qDebug() << file;
                          addPath(file, j);
