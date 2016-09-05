@@ -177,80 +177,16 @@ int IioAdaptor::findSensor(const QString &sensorName)
                     }
                 }
             }
-            //       struct udev_list_entry *list;
-            //     struct udev_list_entry *node;
-            //      list = udev_device_get_properties_list_entry(dev);
-            //            udev_list_entry_foreach (node, list) {
-
-            //                QString key = QString::fromLatin1(udev_list_entry_get_name(node));
-            //                QString value = QString::fromLatin1(udev_list_entry_get_value(node));
-            //                qWarning() << key << value;
-            //            }
-
         }
         udev_device_unref(dev);
     }
     udev_enumerate_unref(enumerate);
-
-    return eventPath.right(1).toInt();
-
-
-    ////////////////////////////////////////
-    static struct iio_context *ctx = iio_create_default_context();
-    if (!ctx) {
-        qWarning() << "no context" << strerror(errno);
+    bool ok2;
+    int result = eventPath.right(1).toInt(&ok2);
+    if (ok2)
+        return result;
+    else
         return -1;
-    }
-    struct iio_device *iiodev = iio_context_find_device(ctx, sensorName.toLocal8Bit());
-    if (!iiodev) {
-        qWarning() << "no iio_device";
-    } else {
-        QString iiodevice(iio_device_get_id(iiodev));
-        int index = iiodevice.right(1).toInt();
-
-        qWarning() << iiodevice
-                   << iio_device_get_name(iiodev);
-        devicePath = QString(IIO_SYSFS_BASE) + iiodevice + "/";
-
-        int channels = iio_device_get_channels_count(iiodev);
-
-        qWarning() << "name" << iio_device_get_name(iiodev)
-                   << "Channels" << channels
-                   << "devicePath" << devicePath;
-        const char *attr;
-
-
-        for (int j = 0; j < channels; j++) {
-            const char *chId;
-            struct iio_channel *chn = iio_device_get_channel(iiodev, j);
-            chId = iio_channel_get_id(chn);
-            qWarning() << "channel id:" << chId;
-
-            attr = iio_channel_find_attr(chn,"raw");
-
-            QString filePath = devicePath + iio_channel_attr_get_filename(chn, attr);
-//            QString filePath = "/sys/bus/iio/devices/"+iiodevice+"/"+iio_channel_attr_get_filename(chn, attr);
-            qWarning() <<"filepath"<< filePath;
-            addPath(filePath, j);
-
-            //            const struct iio_device *trig;
-            //            qWarning() << "is trigger" << iio_device_is_trigger(iiodev)
-            //                       << iio_device_get_trigger(iiodev, &trig);
-
-        }
-
-        if (scale < 0) {
-
-//            double val;
-//          //  iio_channel_attr_read(chn, "scale", buf, sizeof(buf));
-//            iio_channel_attr_read_double(chn, "scale", &val);
-//            scale = val;
-            qWarning() << "scale" << scale;
-        }
-
-        return index;
-    }
-    return -1;
 }
 /*
  * als
