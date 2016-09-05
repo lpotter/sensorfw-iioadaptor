@@ -25,7 +25,7 @@
 #include <errno.h>
 
 #include <iio.h>
-//#include <libudev.h>
+#include <libudev.h>
 
 #include <logging.h>
 #include <config.h>
@@ -121,9 +121,69 @@ int IioAdaptor::findSensor(const QString &sensorName)
 {
     qWarning() << Q_FUNC_INFO << sensorName;
 
+    udev_list_entry *devices;
+    udev_list_entry *dev_list_entry;
+    udev_device *dev;
+    struct udev *udevice = 0;
+    struct udev_enumerate *enumerate = 0;
+
+    if (!udevice)
+        udevice = udev_new();
+
+    enumerate = udev_enumerate_new(udevice);
+    udev_enumerate_add_match_subsystem(enumerate, "iio");
+
+    udev_enumerate_scan_devices(enumerate);
+    devices = udev_enumerate_get_list_entry(enumerate);
+
+    QString eventPath;
+
+    udev_list_entry_foreach(dev_list_entry, devices) {
+        const char *path;
+        path = udev_list_entry_get_name(dev_list_entry);
+
+        dev = udev_device_new_from_syspath(udevice, path);
+        if (qstrcmp(udev_device_get_subsystem(dev), "iio") == 0) {
+            QString name = QString::fromLatin1(udev_device_get_sysattr_value(dev,"name"));
+            if (name == sensorName) {
+                QString eventPath = QString::fromLatin1(udev_device_get_sysname(dev));
+
+                int j = 0;
+                qWarning() << "name:" << name << "devnode" << devnode << "eventPath" << eventPath;
+                QString syspath = "/sys/bus/iio/devices/" + eventPath;
+                QDirIterator it(syspath, QDirIterator::NoIteratorFlags);
+                while (it.hasNext()) {
+                    QString file =  it.next();
+                    if (file.endsWith("raw")) {
+                        qDebug() << file;
+                         addPath(file, j);
+                         ++j;
+                    }
+                }
+            }
+            //       struct udev_list_entry *list;
+            //     struct udev_list_entry *node;
+            //      list = udev_device_get_properties_list_entry(dev);
+            //            udev_list_entry_foreach (node, list) {
+
+            //                QString key = QString::fromLatin1(udev_list_entry_get_name(node));
+            //                QString value = QString::fromLatin1(udev_list_entry_get_value(node));
+            //                qWarning() << key << value;
+            //            }
+
+        }
+        udev_device_unref(dev);
+    }
+    udev_enumerate_unref(enumerate);
+
+    return eventPath.right(1).toInt();
+
+
+    ////////////////////////////////////////
     static struct iio_context *ctx = iio_create_default_context();
     if (!ctx) {
-        qWarning() << "no context";
+        qWarning() << "no context" << strerror(errno);
+        return -1;
     }
     struct iio_device *iiodev = iio_context_find_device(ctx, sensorName.toLocal8Bit());
     if (!iiodev) {
@@ -227,7 +287,7 @@ bool IioAdaptor::deviceEnable(int device, int enable)
     return true;
 }
 
-QString IioAdaptor::deviceGetName(int device)
+QString IioAdaptor::deviceGetName(int /*device*/)
 {
     QString pathDeviceName = devicePath + "/name";
     qWarning() << Q_FUNC_INFO << pathDeviceName;
