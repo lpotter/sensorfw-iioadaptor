@@ -38,6 +38,7 @@
 #include <QTextStream>
 #include <QDir>
 #include <QTimer>
+#include <QDirIterator>
 
 #include <sensord-qt5/deviceadaptor.h>
 #include "datatypes/orientationdata.h"
@@ -149,7 +150,7 @@ int IioAdaptor::findSensor(const QString &sensorName)
                 QString eventPath = QString::fromLatin1(udev_device_get_sysname(dev));
 
                 int j = 0;
-                qWarning() << "name:" << name << "devnode" << devnode << "eventPath" << eventPath;
+                qWarning() << "name:" << name  << "eventPath" << eventPath;
                 QString syspath = "/sys/bus/iio/devices/" + eventPath;
                 QDirIterator it(syspath, QDirIterator::NoIteratorFlags);
                 while (it.hasNext()) {
