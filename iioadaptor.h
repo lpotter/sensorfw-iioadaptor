@@ -85,6 +85,11 @@ public:
         return new IioAdaptor(id);
     }
 
+    virtual bool startSensor();
+    virtual void stopSensor();
+//    virtual bool standby();
+//    virtual bool resume();
+
 protected:
 
     /**
@@ -101,7 +106,7 @@ protected:
 
 
     bool setInterval(const unsigned int value, const int sessionId);
-    unsigned int interval() const;
+  //  unsigned int interval() const;
 
 private:
 

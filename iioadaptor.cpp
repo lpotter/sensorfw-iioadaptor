@@ -83,10 +83,10 @@ void IioAdaptor::setup()
     // Disable and then enable devices to make sure they allow changing settings
 //    for (i = 0; i < IIO_MAX_DEVICES; ++i) {
 //        if (dev_accl_ == i || dev_gyro_ == i || dev_magn_ == i) {
-//            deviceEnable(i, false);
-//            deviceEnable(i, true);
-        //    addDevice(dev_accl_);
-//        }
+    deviceEnable(dev_accl_, false);
+    deviceEnable(dev_accl_, true);
+    addDevice(dev_accl_);
+    //        }
 //    }
     introduceAvailableDataRange(DataRange(0, 65535, 1));
     introduceAvailableInterval(DataRange(10, 586, 0));
@@ -424,13 +424,13 @@ bool IioAdaptor::setInterval(const unsigned int value, const int sessionId)
     return true;
 }
 
-unsigned int IioAdaptor::interval() const
-{
-    int value = 100;
-    sensordLogD() << "Returning dummy value in interval(): " << value;
+//unsigned int IioAdaptor::interval() const
+//{
+//    int value = 100;
+//    sensordLogD() << "Returning dummy value in interval(): " << value;
 
-    return value;
-}
+//    return value;
+//}
 
 quint64 IioAdaptor::getTimestamp()
 {
@@ -442,6 +442,18 @@ quint64 IioAdaptor::getTimestamp()
 
     quint64 result = (tv.tv_sec * 1000000ULL) + (tv.tv_nsec * 0.001); // scale to microseconds
     return result;
+}
+
+bool IioAdaptor::startSensor()
+{
+    deviceEnable(dev_accl_, true);
+    return SysfsAdaptor::startSensor();
+}
+
+void IioAdaptor::stopSensor()
+{
+    deviceEnable(dev_accl_, false);
+    SysfsAdaptor::stopSensor();
 }
 
 
