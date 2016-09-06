@@ -65,9 +65,12 @@ class IioAdaptor : public SysfsAdaptor
 {
     Q_OBJECT
     enum IioSensorType {
-        IIO_ACCELEROMETER = 1,
-        IIO_GYROSCOPE,
-        IIO_MAGNETOMETER
+        IIO_ACCELEROMETER = 1, // accel_3d
+        IIO_GYROSCOPE, // gyro_3d
+        IIO_MAGNETOMETER, // magn_3d
+        IIO_ROTATION, // dev_rotation, quaternion
+        IIO_ALS, // als
+        IIO_TILT // incli_3d
     };
 
 public:
@@ -138,6 +141,7 @@ private:
     IioSensorType sensorType;
     QString devicePath;
     double scale;
+    quint64 getTimestamp();
 
 private slots:
     void setup();

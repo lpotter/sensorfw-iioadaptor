@@ -31,6 +31,7 @@
 #include <config.h>
 #include <datatypes/utils.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "iioadaptor.h"
 #include <sensord-qt5/sysfsadaptor.h>
@@ -113,7 +114,12 @@ int IioAdaptor::addDevice(int device) {
                    << " as channel" << device*IIO_MAX_DEVICE_CHANNELS+i;
         addPath(fileInfo.filePath(),device*IIO_MAX_DEVICE_CHANNELS+i);
     }
-    
+    // scale
+    // frequency
+    // type
+    // offset
+
+
     return 0;
 }
 
@@ -210,6 +216,14 @@ int IioAdaptor::sensorExists(IioAdaptor::IioSensorType sensor)
     case IIO_MAGNETOMETER:
         sensorName = QStringLiteral("magn_3d");
         break;
+        /*
+          case IIO_ROTATION:
+        sensorName = QStringLiteral("dev_rotation");
+          case IIO_ALS:
+        sensorName = QStringLiteral("als");
+          case IIO_TILT:
+        sensorName = QStringLiteral("incli_3d");
+        */
     default:
         return -1;
     }
@@ -305,7 +319,7 @@ int IioAdaptor::scanElementsEnable(int device, int enable)
 
     qWarning() << Q_FUNC_INFO << elementsPath;
 
-                  QDir dir(elementsPath);
+    QDir dir(elementsPath);
     if (!dir.exists()) {
         sensordLogW() << "Directory " << elementsPath << " doesn't exist";
         return 0;
@@ -355,7 +369,6 @@ int IioAdaptor::deviceChannelParseBytes(QString filename)
     return 0;
 }
 
-
 void IioAdaptor::processSample(int fileId, int fd)
 {
     char buf[256];
@@ -372,7 +385,7 @@ void IioAdaptor::processSample(int fileId, int fd)
     }
     result = atoi(buf)  * scale * 1000;
     qWarning() << "Read " << result << " from device " << device << ", channel " << channel;
-qWarning() << result * scale;
+    qWarning() << result * scale;
 
     // FIXME: shouldn't hardcode
     // FIXME: Find a mapping between channels and actual devices (0, 1 and 2 are probably wrong)
@@ -394,6 +407,8 @@ qWarning() << result * scale;
         default:
             return;
         }
+        accl->timestamp_ = getTimestamp();
+
         iioBuffer_->commit();
         iioBuffer_->wakeUpReaders();
     }
@@ -415,6 +430,18 @@ unsigned int IioAdaptor::interval() const
     sensordLogD() << "Returning dummy value in interval(): " << value;
 
     return value;
+}
+
+quint64 IioAdaptor::getTimestamp()
+{
+    struct timespec tv;
+    int ok;
+    ok = clock_gettime(CLOCK_MONOTONIC, &tv);
+    Q_ASSERT(ok == 0);
+    Q_UNUSED(ok);
+
+    quint64 result = (tv.tv_sec * 1000000ULL) + (tv.tv_nsec * 0.001); // scale to microseconds
+    return result;
 }
 
 
