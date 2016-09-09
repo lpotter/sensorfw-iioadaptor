@@ -474,13 +474,13 @@ void IioAdaptor::processSample(int fileId, int fd)
                    << ", channel " << channel;
 
         switch(channel) {
-        case 0: {
+        case 0: { //x
             switch (sensorType) {
             case IioAdaptor::IIO_ACCELEROMETER:
             case IioAdaptor::IIO_GYROSCOPE:
                 timedData = iioXyzBuffer_->nextSlot();
                 result = (result * scale) * 100;
-                timedData->x_= result;
+                timedData->x_= -result;
                 break;
             case IioAdaptor::IIO_MAGNETOMETER:
                 calData = magnetometerBuffer_->nextSlot();
@@ -499,13 +499,13 @@ void IioAdaptor::processSample(int fileId, int fd)
         }
             break;
 
-        case 1: {
+        case 1: { //y
             switch (sensorType) {
             case IioAdaptor::IIO_ACCELEROMETER:
             case IioAdaptor::IIO_GYROSCOPE:
                 timedData = iioXyzBuffer_->nextSlot();
-                timedData->y_ = result;
                 result = (result * scale) * 100;
+                timedData->y_ = -result;
                 break;
             case IioAdaptor::IIO_MAGNETOMETER:
                 calData = magnetometerBuffer_->nextSlot();
@@ -518,13 +518,13 @@ void IioAdaptor::processSample(int fileId, int fd)
         }
             break;
 
-        case 2: {
+        case 2: {// z
             switch (sensorType) {
             case IioAdaptor::IIO_ACCELEROMETER:
             case IioAdaptor::IIO_GYROSCOPE:
                 timedData = iioXyzBuffer_->nextSlot();
                 result = (result * scale) * 100;
-                timedData->z_ = result;
+                timedData->z_ = -result;
                 break;
             case IioAdaptor::IIO_MAGNETOMETER:
                 calData = magnetometerBuffer_->nextSlot();
@@ -538,9 +538,11 @@ void IioAdaptor::processSample(int fileId, int fd)
             break;
         };
 
-        qWarning() << Q_FUNC_INFO << channel << devices_[device].channels;
+        qWarning() << Q_FUNC_INFO << channel << devices_[device].channels
+                   << "numChannels" << numChannels;
 
-        if (channel == devices_[device].channels - 1) {
+        if (channel == numChannels - 1) {
+
             switch (sensorType) {
             case IioAdaptor::IIO_ACCELEROMETER:
             case IioAdaptor::IIO_GYROSCOPE:
