@@ -5,9 +5,11 @@
    <p>
    Copyright (C) 2009-2010 Nokia Corporation
    Copyright (C) 2012 Tuomas Kulve
+   Copyright (C) 2016 Canonical
 
    @author Tuomas Kulve <tuomas@kulve.fi>
-
+   @author Lorn Potte
+r <lorn.potter@canonical.com>
    Sensord is free software; you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License
    version 2.1 as published by the Free Software Foundation.

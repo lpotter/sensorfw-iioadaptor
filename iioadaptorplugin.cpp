@@ -5,8 +5,10 @@
    <p>
    Copyright (C) 2009-2010 Nokia Corporation
    Copyright (C) 2012 Tuomas Kulve
+   Copyright (C) 2016 Canonical
 
    @author Tuomas Kulve <tuomas@kulve.fi>
+   @author Lorn Potter <lorn.potter@canonical.com>
 
    Sensord is free software; you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License
@@ -31,6 +33,9 @@ void IioAdaptorPlugin::Register(class Loader&)
     sensordLogD() << "registering iioaccelerometeradaptor";
     SensorManager& sm = SensorManager::instance();
     sm.registerDeviceAdaptor<IioAdaptor>("accelerometeradaptor");
+    sm.registerDeviceAdaptor<IioAdaptor>("gyroscopeadaptor");
+    sm.registerDeviceAdaptor<IioAdaptor>("magnetometeradaptor");
+    sm.registerDeviceAdaptor<IioAdaptor>("alsadaptor");
 }
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)

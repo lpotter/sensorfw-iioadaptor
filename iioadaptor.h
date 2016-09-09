@@ -5,8 +5,10 @@
    <p>
    Copyright (C) 2009-2010 Nokia Corporation
    Copyright (C) 2012 Tuomas Kulve
+   Copyright (C) 2016 Canonical
 
    @author Tuomas Kulve <tuomas@kulve.fi>
+   @author Lorn Potter <lorn.potter@canonical.com>
 
    Sensord is free software; you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License
@@ -130,23 +132,26 @@ private:
 	int sysfsReadInt(QString filename);
 	int scanElementsEnable(int device, int enable);
 	int deviceChannelParseBytes(QString filename);
-    int addDevice(int device);
 
 	// Device number for the sensor (-1 if not found)
     int dev_accl_;
-    int dev_gyro_;
-    int dev_magn_;
 
-    DeviceAdaptorRingBuffer<TimedXyzData>* iioBuffer_;
-//    DeviceAdaptorRingBuffer<TimedXyzData>* iioGyroBuffer_;
-//    DeviceAdaptorRingBuffer<TimedXyzData>* iioMagnBuffer_;
+    DeviceAdaptorRingBuffer<TimedXyzData>* iioXyzBuffer_;
+    DeviceAdaptorRingBuffer<TimedUnsigned>* alsBuffer_;
+    DeviceAdaptorRingBuffer<CalibratedMagneticFieldData>* magnetometerBuffer_;
 
 	struct iio_device devices_[IIO_MAX_DEVICES];
     QString deviceId;
     IioSensorType sensorType;
     QString devicePath;
     double scale;
-    quint64 getTimestamp();
+    int frequency;
+    int offset;
+    int numChannels;
+
+    TimedXyzData* timedData;
+    CalibratedMagneticFieldData *calData;
+    TimedUnsigned *uData;
 
 private slots:
     void setup();
